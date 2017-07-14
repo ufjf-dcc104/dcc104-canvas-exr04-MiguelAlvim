@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Missile Commander</title>
+	<script src="sprite_box.js" charset="utf-8">	</script>
+	<script src="gridMap.js" charset="utf-8">	</script>
+	<script src="GameSetup.js" charset="utf-8">	</script>
+	<script src="audioLoader.js" charset="utf-8">	</script>
+  </head>
+  <body>
+	<canvas>
+		<script>
+			setupGame(document.getElementsByTagName("Canvas")[0]);
+			setCanvasSize(eCanvas);
+			var score = 0;
+			var missiles_timer=0;
+			var enemy_timer=0;
+			var bg_musicTimer = 0;
+			var enemyMissileList = new Array();
+			var targets = new Array();
+			var initialTargetAmount;
+			var sounds = new AudioLoader(30);
+				sounds.load("missileLaunch_se","audio/SoundEffects/launches/rlaunch.wav");
+				sounds.load("bgmusic_ms","audio/Music/Gregoire Lourme - Commando Team (Action) [loop cut].ogg");
+				sounds.load("missileBuildingHit_se","audio/SoundEffects/explosions/explode.wav");
+				sounds.load("missileInterceptHit_se","audio/SoundEffects/explosions/explodemini.wav");
+			var Map = new GridMap();
+	     		Map.w = eCanvas.width-1;
+		    	Map.h = eCanvas.height-1;
+				Map.setColorCode(0,"rgb(0, 0, 055)");
+				Map.setColorCode(1,"Black");
+				Map.setColorCode(2,"rgb(155, 102, 102)");
+				Map.setColorCode(3,"rgb(47, 8, 7)");
+				Map.drawSeparation = false;
+			Map.setCellsValue([	
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,0],
+				[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,0],
+				[0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,1,0],
+				[0,1,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0],
+				[0,1,1,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,0],
+				[0,1,1,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,0],
+				[0,1,1,0,0,1,1,1,1,1,1,0,0,0,2,2,0,0,0,0,1,1,1,0,0,0,1,1,1,0],
+				[0,1,1,0,0,1,1,1,1,1,1,0,0,2,2,2,2,0,0,0,1,1,1,0,0,0,1,1,1,0],
+				[0,1,1,0,0,1,1,1,1,1,1,0,0,2,2,2,2,0,0,0,1,1,1,0,0,0,1,1,1,0]
+			]);				
+			for(var i =0;i<Map.map.length;i++){
+				for(var j =0;j<Map.map[i].length;j++){
+					if(Map.map[i][j] == 1)
+						targets.push({x:j,y:i});
+				}
+			}
+			initialTargetAmount = targets.length;
+			function starSky(){
+				this.stars = new Array();
+				for(var i =0;i<200;i++){
+					var star = {x:Math.floor(Math.random() * eCanvas.width),y:Math.floor(Math.random() * eCanvas.height)};
+					var cell = Map.getCellByXY(star.x,star.y);
+					if(cell.mx >=0 && cell.my >=0)
+					if(Map.getCellValue(cell.my,cell.mx)==0)
+						this.stars.push(star);
+				}
+				this.draw = function(ctx){
+					for(var i=0;i<this.stars.length;i++){
+						ctx.save();
+							ctx.translate(this.stars[i].x,this.stars[i].y);
+							ctx.fillStyle = "white";
+							ctx.fillRect(-1,-1,1,1);
+						ctx.restore();
+					}
+				}
+			};
+			var turrent = new Sprite();
+				turrent.color = "red";
+				turrent.w = eCanvas.width*0.005;
+				turrent.h = eCanvas.height*0.05;
+				turrent.x = eCanvas.width/2;
+				turrent.y = eCanvas.height*26.5/30;
+			var turrentBase = new Sprite();
+				turrentBase.color = "red";
+				turrentBase.w = eCanvas.width*0.05;
+				turrentBase.h = eCanvas.height*0.05;
+				turrentBase.x = eCanvas.width/2;
+				turrentBase.y = eCanvas.height*27.25/30;
+			objects.push(Map);
+			objects.push(new starSky());
+			objects.push(turrent);
+			objects.push(turrentBase);
+			var hudDraw = {
+				draw:function(ctx){
+					ctx.font="10px Arial";
+					ctx.fillStyle = "WHITE";
+					ctx.fillText("Score: "+score,turrentBase.x*0.875,turrentBase.y*1.05);
+					ctx.fillText("Damage: "+(100-(targets.length/initialTargetAmount)*100).toFixed(0)+"%",turrentBase.x*0.875,turrentBase.y*1.08);
+					if((targets.length/initialTargetAmount)*100 < 5 ){
+						ctx.font=eCanvas.width*0.1+"px Arial";
+						ctx.fillText("Game Over",eCanvas.width/2-40,eCanvas.height/2);
+						ctx.font=eCanvas.width*0.04+"px Arial";
+						ctx.fillText("Final Score: "+score,eCanvas.width/2,eCanvas.height/2+45);
+					}
+				}
+			};
+			objects.push(hudDraw);
+			mainLoop();
+			//######################################################################################################################################
+			//Functions
+			setMouseFunction("click",0,function(thi){shoot();},new Array());//Creates a missile with mouse click
+			setLoopFunction(function(thi){Map.setSize(eCanvas.height,eCanvas.width);},new Array());//autoUpdates the canvas size
+			mouseLook = function(thi){//Sets the gun angle
+				var vecX = turrent.x-mouseX;
+				var vecY = turrent.y-mouseY;
+				var norm = Math.sqrt(vecX*vecX+vecY*vecY);
+				if(norm!= 0){
+					vecX = vecX/norm;
+					vecY = vecY/norm;
+				}
+				var angle = -(Math.atan(vecX/vecY)/Math.PI)*180;
+				turrent.angle = angle;
+			};
+			setLoopFunction(mouseLook,new Array());
+			setLoopFunction(function(){//Mods the timers for the next missile and game over condition: 95% of buildings lost			
+				if((targets.length/initialTargetAmount)*100 > 5){
+					if(missiles_timer>0)
+						missiles_timer-=1*deltaTime;
+					if(enemy_timer>0)
+						enemy_timer-=1*deltaTime;
+				}else{
+					missiles_timer = 1;
+					enemy_timer = 1;
+					loopFunctions.splice(loopFunctions.indexOf(mouseLook),1);
+				}
+			},null);
+			setLoopFunction(function(){//Generate the Enemy Missiles
+				if(enemy_timer<=0){
+					if(targets.length>0){
+						var target = Math.floor(Math.random() * targets.length);
+						var missile = new Sprite();
+						missile.color = "rgb(100,100,0)";
+						missile.w = eCanvas.width*0.025;
+						missile.h = eCanvas.height*0.005;
+						missile.x = Math.floor(Math.random() * eCanvas.width);
+						missile.y = 0;
+						missile.accangle = 1000;
+						missile.hasFrictionX = false;
+						missile.hasFrictionY = false;
+						missile.hasFrictionAngle = false;
+						missile.accNaturalLimit = 0.2*(0.4*score+1);
+						<!-- missile.calculateCollisionPoints(); -->
+						missile.oldMove = missile.move;
+						missile.kill = false;
+						missile.move = function(dt){
+							this.oldMove(dt);
+							var cellCodes = new Array();cellCodes.push(1);
+							if(Map.collisionInFront(this,cellCodes)){
+								this.kill = true;
+								sounds.play("missileBuildingHit_se",0.7);
+								var xmod =0;
+								var ymod =0;
+								if (this.velx>0)
+									xmod = 1;
+								else if(this.velx<0)
+									xmod =-1;
+								if (this.vely>0)
+									ymod = 1;
+								else if(this.vely<0)
+									ymod =-1;
+								var cell = Map.getCellByXY(this.x+this.w*xmod+this.velx,this.y+this.h*ymod+this.vely);
+								for(var i = -1;i<2;i++){
+									for(var j = -1;j<2;j++){
+										if(cell.mx+i>=0 && cell.mx+i<Map.map.length && cell.my+j>=0 && cell.my+j<Map.map[cell.mx].length
+											&& Map.map[cell.my+i][cell.mx+j]==1){
+											Map.setCellValue(cell.my+i,cell.mx+j,3);		
+											for(var k=0;k<targets.length;k++){
+												<!-- console.log(targets[k].x+"=="+(cell.mx+j)+"    "+targets[k].y+"=="+(cell.my+i)); -->
+												if(targets[k].x==cell.mx+j && targets[k].y==cell.my+i){
+													targets.splice(targets.indexOf(targets[k]),1);
+													<!-- console.log("OK"); -->
+													break;
+												}
+											}
+											<!-- console.log("END"); -->
+										}
+									}
+									<!-- console.log("=============================="); -->
+								}
+							}
+							if(this.x<0 || this.y<0 || this.x>eCanvas.height || this.y>eCanvas.width){
+								this.kill = true;
+							}
+							if(this.kill){
+								objects.splice(objects.indexOf(this),1);
+								enemyMissileList.splice(enemyMissileList.indexOf(this),1);
+								return;
+							}
+						};
+						var vecX = missile.x-Map.getXYByCell(targets[target].x,targets[target].y).mx;
+						var vecY = missile.y-Map.getXYByCell(targets[target].x,targets[target].y).my;
+						var norm = Math.sqrt(vecX*vecX+vecY*vecY);
+						if(norm!= 0){
+							vecX = vecX/norm;
+							vecY = vecY/norm;
+						}
+						var angle = -(Math.atan(vecX/vecY)/Math.PI)*180;
+						missile.angle = angle+90;
+						enemy_timer = Math.floor(Math.random() * Math.max(0,4 - Math.floor(score*0.01)))+1;
+						objects.push(missile);
+						enemyMissileList.push(missile);
+					}
+				}
+			},null);
+			setLoopFunction(function(){//Indefinetly Plays the GB music
+				var now = new Date();
+				if(now.getTime() - bg_musicTimer > sounds.audios["bgmusic_ms"].duration*1000){
+					sounds.play("bgmusic_ms",0.5);
+					bg_musicTimer = new Date();
+				}
+			},null);
+			function shoot(){//shoots a missile from the turrent
+				if(missiles_timer<=0){
+					var missile = new Sprite();
+					missile.color = "rgb(100,0,80)";
+					missile.w = eCanvas.width*0.025;
+					missile.h = eCanvas.height*0.003;
+					missile.maskW = eCanvas.width*0.05;
+					missile.maskH = eCanvas.height*0.05;
+					missile.x = eCanvas.width/2;
+					missile.y = eCanvas.height*26.5/30;
+					missile.angle = turrent.angle+90;
+					missile.accangle = -1000;
+					missile.hasFrictionX = false;
+					missile.hasFrictionY = false;
+					missile.hasFrictionAngle = false;
+					missile.accNaturalLimit = 40;
+					missile.oldMove = missile.move;
+					<!-- missile.calculateCollisionPoints(); -->
+					missile.move = function(dt){
+						this.oldMove(dt);
+						for(var i = 0;i<enemyMissileList.length;i++){
+							if(missile.circularColisionCheckByMask(enemyMissileList[i].x,enemyMissileList[i].y)){
+								enemyMissileList[i].kill = true;
+								score++;
+								sounds.play("missileInterceptHit_se",0.3);
+							}
+						}
+						if(this.x<0 || this.y<0 || this.x>eCanvas.height || this.y>eCanvas.width){
+							objects.splice(objects.indexOf(this),1);
+						}
+					};
+				objects.push(missile);
+				missiles_timer = 0.6;
+				sounds.play("missileLaunch_se",0.4);
+				}
+			}
+		</script>
+	</canvas>
+  </body>
+</html>
